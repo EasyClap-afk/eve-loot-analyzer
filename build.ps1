@@ -7,7 +7,5 @@ python -m PyInstaller --noconfirm --windowed --onedir --distpath $OutputDirector
 if ($LASTEXITCODE -ne 0) { throw 'Build failed' }
 $appDirectory = Join-Path $OutputDirectory 'EveLootAnalyzer'
 Copy-Item -LiteralPath 'README.md' -Destination (Join-Path $appDirectory 'README.md') -Force
-Copy-Item -LiteralPath 'README.en.md' -Destination (Join-Path $appDirectory 'README.en.md') -Force
-Copy-Item -LiteralPath 'Install.ps1','Install.bat' -Destination $OutputDirectory -Force
 python scripts/package.py $OutputDirectory
 if ($LASTEXITCODE -ne 0) { throw 'ZIP packaging failed' }
