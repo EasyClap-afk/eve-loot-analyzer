@@ -22,8 +22,6 @@ The installer language controls the wizard; use the two flags in the app to sele
 After building the Windows package, run `Start.bat` in the project folder, or `dist-v1.5/EveLootAnalyzer/EveLootAnalyzer.exe`.
 For another computer, extract **all** of `dist-v1.5/EveLootAnalyzer-Windows.zip`. Keep the `_internal` folder next to the executable. Python is not required.
 
-Optional: `Install.bat` installs the app under `%LOCALAPPDATA%\Programs\EveLootAnalyzer` and creates a desktop shortcut, without administrator privileges. Close the app before reinstalling.
-
 Use the flags in the upper-right corner: Polish for Polski, British for English. Changes apply immediately and are remembered. Switching languages preserves pasted loot, results, filters and sorting. EVE item and skill names retain their original names.
 
 ## Analyze loot
