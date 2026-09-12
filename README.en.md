@@ -2,9 +2,18 @@
 
 Windows desktop loot valuation and blueprint manufacturing calculator. Version 1.5 includes a black and red Pochven-inspired theme and complete Polish/English interface localization.
 
-## Start and choose a language
+## Run from source
 
-Run `Start.bat` in the project folder, or `dist-v1.5/EveLootAnalyzer/EveLootAnalyzer.exe`.
+This repository contains the source code and bundled data. Generated Windows EXE and ZIP packages are not stored in the repository. On Windows 10/11 with Python 3.11 or later:
+
+```powershell
+python -m pip install -r requirements.txt
+python main.py
+```
+
+## Windows package and language selection
+
+After building the Windows package, run `Start.bat` in the project folder, or `dist-v1.5/EveLootAnalyzer/EveLootAnalyzer.exe`.
 For another computer, extract **all** of `dist-v1.5/EveLootAnalyzer-Windows.zip`. Keep the `_internal` folder next to the executable. Python is not required.
 
 Optional: `Install.bat` installs the app under `%LOCALAPPDATA%\Programs\EveLootAnalyzer` and creates a desktop shortcut, without administrator privileges. Close the app before reinstalling.
@@ -21,7 +30,7 @@ Use the flags in the upper-right corner: Polish for Polski, British for English.
 
 Empty inventory quantity cells count as one item; invalid non-empty quantities remain unresolved. The summary reports recognized and unresolved rows.
 
-Click any results table header to sort; click again to reverse the order. Currency sorting uses exact amounts rather than rounded k/m/b labels. Sorting is preserved on refresh and language changes.
+Click any results table header to sort; click again to reverse the order. Currency sorting uses exact amounts rather than rounded k/m/b labels. Columns with multiple values are compared from left to right; missing values form a separate group. Sorting is preserved on refresh and language changes.
 
 Blueprints show **Avg cost / 1 BPC** and **Avg profit / 1 BPC** beside stack totals. One copy includes the configured number of runs. These averages are stack totals divided by the number of copies; a separate one-copy analysis can differ because market depth and liquidity depend on quantity.
 
@@ -29,7 +38,9 @@ Blueprints show **Avg cost / 1 BPC** and **Avg profit / 1 BPC** beside stack tot
 
 - Sell orders and material purchases use Jita 4-4, station `60003760`, system `30000142`. History is for **The Forge region**, `10000002`, as a proxy for Jita liquidity.
 - Instant Sell walks eligible buy orders, respecting remaining volume, minimum volume and stargate range. Unsold quantities are shown explicitly.
-- Amounts use decimal arithmetic. Missing scenarios show N/A. Partial totals include known components and are marked.
+- Amounts use decimal arithmetic; snapshots preserve decimals as text without converting them to floating-point numbers. Missing scenarios show N/A. Partial totals include known components and are marked. Unsold quantities contribute no instant-sale proceeds.
+- Missing history days contribute zero volume, but no invented price. Confidence reflects missing observations. Realistic value blends sale scenarios and requires the relevant prices.
+- Manufacturing material efficiency applies to the whole job, without structure rigs. A CANNOT BUILD status preserves the economic calculation while identifying unmet skill requirements. Unprofitable copies have zero build value because the value is capped at a minimum of zero.
 - Realistic value, confidence, liquidity and sale time are transparent estimates, not guaranteed sale proceeds. Details show their inputs and score components.
 - Blueprint economics assume a complete independent purchase of materials. Materials in your loot never reduce the manufacturing cost.
 - Manufacturing uses Jita NPC station fees and live ESI cost indices / adjusted prices. Blueprint build value is potential positive manufacturing profit, not a contract price for the copy. Additional production capital and required skills are needed.
@@ -54,13 +65,27 @@ Manual mode works without SSO. To connect a character, register a Native / PKCE 
 - Skills and raw standings are imported; manual override preserves your manual values. Set clone state and blueprint parameters manually.
 - Port 8765 must be free. Login times out after three minutes. Synchronization runs every 15 minutes while the app is open; there is no separate background service.
 
+Integration documentation: [CCP Static Data](https://developers.eveonline.com/docs/services/static-data/) and [CCP SSO / PKCE](https://developers.eveonline.com/docs/services/sso/).
+
 ## Local data and maintenance
 
 The app stores SQLite, cached market data and rotating logs in `%LOCALAPPDATA%\EveLootAnalyzer`. Open or back up this folder from **Data**. Set `EVE_LOOT_DATA` to use a separate directory. JSON exports exclude tokens.
 
 A bundled SDE index is included. Use **Data → Check / download SDE** for updates. Public market errors fall back to cached data when available and mark it stale; missing data never becomes an invented price.
 
-Developer setup: Python 3.11+, `python -m pip install -r requirements.txt`, then `python main.py`. Run tests with `python -m pytest tests -q`. Install `pytest` and `pyinstaller` and run `build.ps1` to package Windows. Localization catalogs are in `app/translations.py`; Qt Polish translations are bundled in `assets/qt`.
+## Tests and Windows build
+
+```powershell
+python -m pip install pytest pyinstaller
+python -m pytest tests -q
+powershell -ExecutionPolicy Bypass -File build.ps1
+```
+
+The build script runs the tests and creates the EXE folder and portable ZIP under `dist-v1.5`.
+
+The domain modules are `parser.py`, `market.py`, `industry.py` and `rules.py`. Integrations are in `esi.py`, `sde.py` and `sso.py`; `storage.py` manages SQLite, `engine.py` coordinates analysis, and `ui.py` contains the PySide6 interface. Network requests and SDE imports run outside the GUI thread. Localization catalogs are in `app/translations.py`; Qt Polish translations are bundled in `assets/qt`.
+
+## Validation and limitations
 
 The tests cover calculations, parser formats, market depth, caching, profiles, snapshots, watchlist, sorting, per-copy values and language changes during analysis. Public ESI/SDE integration and packaged startup have been checked locally. Full character login requires your Client ID and authorization. No separate clean-machine certification or Authenticode signature is provided.
 
