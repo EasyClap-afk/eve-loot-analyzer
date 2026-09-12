@@ -1,86 +1,92 @@
 # EVE Loot & Jita Market Analyzer
 
-Aplikacja desktopowa dla Windows 10/11 na podstawie specyfikacji v1.0.
+Windows desktop loot valuation and blueprint manufacturing calculator. Version 1.5 includes a black and red Pochven-inspired theme and complete Polish/English interface localization.
 
-## Uruchomienie
+## Run from source
 
-Kliknij **Start.bat** w folderze projektu albo **EveLootAnalyzer.exe** w `dist-v1.5/EveLootAnalyzer`.
-Paczka `dist-v1.5/EveLootAnalyzer-Windows.zip` zawiera program i wymagane biblioteki: wypakuj cały folder, a następnie uruchom EXE. Python nie jest potrzebny w wersji spakowanej. Nie przenoś samego EXE bez folderu `_internal`.
-
-Wersja 1.5 ma czarno-czerwony motyw inspirowany Pochven. Język wybierz w **Profil i ustawienia → Język interfejsu → Polski / English**. Wybór jest zapamiętywany lokalnie i działa od razu, także dla bieżących wyników i zapisanych sesji. Same obliczenia, identyfikatory i wartości w bazie nie są tłumaczone ani zmieniane. Nazwy przedmiotów, skilli, postaci i lokacji EVE pozostają oryginalne.
-
-Polskie liczby mają przecinek dziesiętny, angielskie — kropkę. Próg na liście obserwowanych również przyjmuje format wybranego języka. Przykłady: `1 234,56` (PL), `1,234.56` (EN). Dokumentacja angielska: [README.en.md](README.en.md).
-
-Opcjonalnie uruchom `Install.bat`: kopiuje program do `%LOCALAPPDATA%\Programs\EveLootAnalyzer` i tworzy skrót na pulpicie, bez uprawnień administratora. Aktualizację wykonuj przy zamkniętej aplikacji. Dane sesji pozostają w osobnym katalogu danych.
-
-1. W zakładce **Profil i ustawienia** ustaw skille, RAW standings i stan klona.
-2. W **Analiza lootu** wklej cargo skopiowane z EVE i kliknij **Analizuj rynek**.
-3. Dwuklik na przedmiocie pokazuje fill levels, depth, historię, rozbicie score i uzasadnienie.
-4. Dwuklik na blueprintcie pozwala ustawić remaining runs, runs, ME i TE. Parametry dotyczą każdej kopii w stosie; ilość kopii pochodzi z lootu. Przy różnych parametrach analizuj kopie osobno.
-5. Dodaj przedmioty lub produkty BPC do **Watchlist** i odśwież ceny. Zapisz analizę jako sesję, aby zbierać statystyki.
-
-Nazwy przedmiotów pozostają po angielsku. Pierwsze uruchomienie używa dołączonego indeksu SDE; bez indeksu aplikacja automatycznie go pobierze. Aktualizację uruchomisz w zakładce **Dane**.
-
-Wiersze inventory mogą zawierać puste pole ilości (np. pojedynczy blueprint) — aplikacja przyjmuje wtedy 1 sztukę, zachowując pozycje pozostałych kolumn. Nieprawidłowa, niepusta ilość pozostaje nierozpoznana. Podsumowanie pokazuje liczbę rozpoznanych typów blueprintów i nierozpoznanych wierszy.
-
-Tabela blueprintów pokazuje **Avg cost / 1 BPC** i **Avg profit / 1 BPC**. Są to koszt budowy i realistic profit całego stosu podzielone przez liczbę kopii. Jedna kopia obejmuje ustawioną liczbę runs. W szczegółach dostępne są też materiały, job fee, wpływy i zysk w przeliczeniu na jedną kopię. To średnie z analizy całego stosu; osobna analiza jednej kopii może dać inny wynik z powodu głębokości rynku i płynności.
-
-Kliknij nagłówek kolumny w tabeli wyników, blueprintów, watchlisty, sesji lub dropów, aby sortować. Kolejne kliknięcie odwraca kolejność. Kwoty są porównywane według pełnej wartości ISK, niezależnie od skrótu k/m/b i zaokrąglenia. Kolumny z kilkoma wartościami porównywane są od lewej; N/A pozostaje oddzielną grupą. Odświeżenie tabeli zachowuje wybraną kolumnę i kierunek sortowania.
-
-## Obliczenia i interpretacja
-
-- Jita 4-4: station `60003760`, system `30000142`. Historia: cały The Forge `10000002`, jako przybliżenie płynności Jita.
-- Instant Sell przechodzi po zleceniach obejmujących Jita, uwzględnia `min_volume`, dostępną ilość i dystans przez stargate’y. Częściowa sprzedaż pokazuje niesprzedaną ilość.
-- Kwoty liczone przez `Decimal`, snapshoty przechowują je jako tekst dziesiętny bez konwersji przez float.
-- Liquidity / Confidence / Realistic / ETA to jawne heurystyki z dokumentu, nie gwarancje sprzedaży. Brakujące dni historii mają zerowy wolumen, ale nie otrzymują wymyślonej ceny; confidence uwzględnia brak obserwacji.
-- Realistic jest blendem scenariuszy. Gdy jednej ceny brakuje, pokazuje N/A. Suma z gwiazdką / PARTIAL zawiera tylko znane składniki. Przy częściowym buy depth niesprzedana część nie ma przypisanych wpływów z natychmiastowej sprzedaży.
-- BPC build value oznacza dodatni zysk ekonomiczny z produkcji po pełnym zakupie materiałów, a nie cenę kontraktową kopii. Wymaga kapitału na materiały i job. `CANNOT BUILD` nie usuwa ekonomicznej kalkulacji; trzeba spełnić wymogi skilli. Zero przy nieopłacalnym BPC wynika z `max(0, profit)`.
-- Produkcja: Jita NPC station, ME liczone na cały job, bez rigów. SCI i adjusted prices pobierane z ESI; materiały obecne w loocie nigdy nie zmniejszają kosztu budowy.
-- Baseline podatków: specyfikacja z 2026-09-09, moduł `app/rules.py`. Nagłówek ESI używa tej daty, ograniczonej do bieżącego dnia UTC−11, ponieważ ESI odrzuca datę z przyszłości.
-- Watchlist: target jednostkowy, kierunek `>=` lub `<=`; zmiana trybu zeruje stare pomiary, aby nie porównywać różnych miar. Odświeżenie respektuje ważny cache.
-- Sesje są niezmiennymi snapshotami. Dashboard filtruje site i lokalną datę, liczy średnią, medianę, ISK/h i obserwowaną częstość dropów. Wartość łączna obejmuje regular realistic + ekonomiczną wartość BPC, nie faktycznie zrealizowany przychód. ISK/h nie obejmuje oczekiwania na sprzedaż i produkcję.
-
-## Opcjonalne SSO
-
-Tryb ręczny działa bez konta developerskiego. Do połączenia postaci zarejestruj własną aplikację typu Native / PKCE w EVE Developer Portal i wpisz publiczny **Client ID** w ustawieniach.
-
-- Callback: `http://localhost:8765/callback`
-- Scopes: `esi-skills.read_skills.v1` i `esi-characters.read_standings.v1`
-- Nie używamy client secret. Refresh token jest zapisany w Windows Credential Manager; access token pozostaje w pamięci.
-- Podpis JWT, issuer, audience, client ID i state są sprawdzane. Po połączeniu skille i standingi synchronizują się; manual override zachowuje ręczne wartości.
-- Clone state ustaw ręcznie. SSO nie odczytuje parametrów BPC. Synchronizacja działa przy otwartej aplikacji co 15 minut; nie ma osobnego procesu w tle.
-- Port 8765 musi być wolny. Login wygasa po 3 minutach. Przy błędzie ostatni profil pozostaje zachowany.
-- Walidacja tokenu dopuszcza 60 sekund różnicy zegarów. Jeśli pojawi się komunikat o większej różnicy czasu, użyj w Windows: Ustawienia → Czas i język → Data i godzina → Synchronizuj teraz, a następnie ponownie połącz postać. Podpis, issuer, audience i Client ID nadal są sprawdzane.
-
-Dokumentacja integracji: [CCP SDE](https://developers.eveonline.com/docs/services/static-data/), [CCP SSO / PKCE](https://developers.eveonline.com/docs/services/sso/).
-
-## Dane lokalne
-
-Domyślnie `%LOCALAPPDATA%\EveLootAnalyzer`: baza `analyzer.sqlite3`, cache i rotowane logi. Zakładka Dane umożliwia backup SQLite i otwarcie folderu. Zmienna `EVE_LOOT_DATA` pozwala wskazać oddzielny katalog, np. do testów. Eksport JSON zapisuje pełne wyniki bez tokenów.
-
-## Uruchomienie ze źródeł / budowanie
-
-Python 3.11+ (sprawdzone na 3.11) i Windows:
+This repository contains the source code and bundled data. Generated Windows EXE and ZIP packages are not stored in the repository. On Windows 10/11 with Python 3.11 or later:
 
 ```powershell
 python -m pip install -r requirements.txt
 python main.py
 ```
 
-Testy i paczka:
+## Windows package and language selection
+
+After building the Windows package, run `Start.bat` in the project folder, or `dist-v1.5/EveLootAnalyzer/EveLootAnalyzer.exe`.
+For another computer, extract **all** of `dist-v1.5/EveLootAnalyzer-Windows.zip`. Keep the `_internal` folder next to the executable. Python is not required.
+
+Optional: `Install.bat` installs the app under `%LOCALAPPDATA%\Programs\EveLootAnalyzer` and creates a desktop shortcut, without administrator privileges. Close the app before reinstalling.
+
+Use the flags in the upper-right corner: Polish for Polski, British for English. Changes apply immediately and are remembered. Switching languages preserves pasted loot, results, filters and sorting. EVE item and skill names retain their original names.
+
+## Analyze loot
+
+1. Set your trade and industry skills, raw Caldari standings, clone state and material purchasing method in **Profile and settings**.
+2. Paste inventory text into **Analyze loot**, then click **Analyze market**.
+3. Double-click an item to inspect buy fills, sell depth, history, confidence, liquidity and recommendations.
+4. Double-click a blueprint to set remaining runs, runs per copy, ME and TE. Identical parameters apply to every copy in that stack. Analyze copies separately when their parameters differ.
+5. Use **Save session** to preserve the valuation. Add items or blueprint products to **Watchlist** to track targets.
+
+Empty inventory quantity cells count as one item; invalid non-empty quantities remain unresolved. The summary reports recognized and unresolved rows.
+
+Click any results table header to sort; click again to reverse the order. Currency sorting uses exact amounts rather than rounded k/m/b labels. Columns with multiple values are compared from left to right; missing values form a separate group. Sorting is preserved on refresh and language changes.
+
+Blueprints show **Avg cost / 1 BPC** and **Avg profit / 1 BPC** beside stack totals. One copy includes the configured number of runs. These averages are stack totals divided by the number of copies; a separate one-copy analysis can differ because market depth and liquidity depend on quantity.
+
+## Valuation rules
+
+- Sell orders and material purchases use Jita 4-4, station `60003760`, system `30000142`. History is for **The Forge region**, `10000002`, as a proxy for Jita liquidity.
+- Instant Sell walks eligible buy orders, respecting remaining volume, minimum volume and stargate range. Unsold quantities are shown explicitly.
+- Amounts use decimal arithmetic; snapshots preserve decimals as text without converting them to floating-point numbers. Missing scenarios show N/A. Partial totals include known components and are marked. Unsold quantities contribute no instant-sale proceeds.
+- Missing history days contribute zero volume, but no invented price. Confidence reflects missing observations. Realistic value blends sale scenarios and requires the relevant prices.
+- Manufacturing material efficiency applies to the whole job, without structure rigs. A CANNOT BUILD status preserves the economic calculation while identifying unmet skill requirements. Unprofitable copies have zero build value because the value is capped at a minimum of zero.
+- Realistic value, confidence, liquidity and sale time are transparent estimates, not guaranteed sale proceeds. Details show their inputs and score components.
+- Blueprint economics assume a complete independent purchase of materials. Materials in your loot never reduce the manufacturing cost.
+- Manufacturing uses Jita NPC station fees and live ESI cost indices / adjusted prices. Blueprint build value is potential positive manufacturing profit, not a contract price for the copy. Additional production capital and required skills are needed.
+- Per-copy figures are averages across the analyzed stack. Manufacturing time is per copy/job.
+- The mechanics baseline is the supplied specification dated 2026-09-09. Constants are in `app/rules.py`. The ESI compatibility date is capped at the current UTC−11 calendar day to avoid future-date rejection.
+
+## Watchlist and sessions
+
+Watchlist targets are per unit. Choose sell price, buy price or realistic net, and either `>=` or `<=`. Changing the mode resets measurements so different metrics are not compared. Refresh respects ESI cache expiry. Targets accept English `1,234.56` or Polish `1 234,56` according to the selected language.
+
+Sessions preserve immutable valuation snapshots. Filter by activity and local date. Statistics include mean/median value, best/worst activity, ISK/hour for timed sessions, per-pilot values and observed drop frequencies. These are personal observations, not official drop probabilities. Historical value includes regular-item realistic value plus potential blueprint manufacturing value; it is not a record of realized sales. ISK/hour excludes manufacturing and sale waiting time.
+
+## Optional EVE SSO
+
+Manual mode works without SSO. To connect a character, register a Native / PKCE application in the EVE developer portal and enter its public **Client ID** in settings.
+
+- Callback: `http://localhost:8765/callback`
+- Scopes: `esi-skills.read_skills.v1` and `esi-characters.read_standings.v1`
+- Client Secret is not used. Refresh tokens are kept in Windows Credential Manager; access tokens remain in memory.
+- JWT signatures, issuer, audience, client ID and OAuth state are checked. A 60-second clock tolerance accommodates small differences between Windows and SSO time.
+- If a larger clock difference is reported, use Windows **Settings → Time & language → Date & time → Sync now**, then reconnect.
+- Skills and raw standings are imported; manual override preserves your manual values. Set clone state and blueprint parameters manually.
+- Port 8765 must be free. Login times out after three minutes. Synchronization runs every 15 minutes while the app is open; there is no separate background service.
+
+Integration documentation: [CCP Static Data](https://developers.eveonline.com/docs/services/static-data/) and [CCP SSO / PKCE](https://developers.eveonline.com/docs/services/sso/).
+
+## Local data and maintenance
+
+The app stores SQLite, cached market data and rotating logs in `%LOCALAPPDATA%\EveLootAnalyzer`. Open or back up this folder from **Data**. Set `EVE_LOOT_DATA` to use a separate directory. JSON exports exclude tokens.
+
+A bundled SDE index is included. Use **Data → Check / download SDE** for updates. Public market errors fall back to cached data when available and mark it stale; missing data never becomes an invented price.
+
+## Tests and Windows build
 
 ```powershell
 python -m pip install pytest pyinstaller
-python -m pytest -q
+python -m pytest tests -q
 powershell -ExecutionPolicy Bypass -File build.ps1
 ```
 
-Warstwy: `parser.py`, `market.py`, `industry.py`, `rules.py` — logika; `esi.py`, `sde.py`, `sso.py` — integracje; `storage.py` — SQLite; `engine.py` — orkiestracja; `ui.py` — PySide6. Operacje sieciowe i import SDE wykonują się poza wątkiem GUI.
+The build script runs the tests and creates the EXE folder and portable ZIP under `dist-v1.5`.
 
-## Zakres weryfikacji
+The domain modules are `parser.py`, `market.py`, `industry.py` and `rules.py`. Integrations are in `esi.py`, `sde.py` and `sso.py`; `storage.py` manages SQLite, `engine.py` coordinates analysis, and `ui.py` contains the PySide6 interface. Network requests and SDE imports run outside the GUI thread. Localization catalogs are in `app/translations.py`; Qt Polish translations are bundled in `assets/qt`.
 
-Automatyczne testy obejmują podatki, range/depth/min_volume, score, history, realistic cap, ME, job fee, profit/ROI, parser, cache/ETag/pagination/stale, profile, watchlist oraz scenariusz 5 itemów + 2 BPC i snapshot sesji. Połączenie publiczne ESI/SDE sprawdzone na rzeczywistych danych.
+## Validation and limitations
 
-Pełne logowanie SSO wymaga Client ID i ręcznego zalogowania postaci; nie zostało sprawdzone na koncie użytkownika. Paczka Windows jest testowana lokalnie, nie na oddzielnej czystej maszynie. Program nie ma podpisu Authenticode; dystrybucja to przenośny ZIP z opcjonalnym instalatorem dla bieżącego użytkownika.
+The tests cover calculations, parser formats, market depth, caching, profiles, snapshots, watchlist, sorting, per-copy values and language changes during analysis. Public ESI/SDE integration and packaged startup have been checked locally. Full character login requires your Client ID and authorization. No separate clean-machine certification or Authenticode signature is provided.
 
-EVE Online i nazwy przedmiotów są własnością CCP. Aplikacja jest niezależnym zewnętrznym kalkulatorem.
+EVE Online and associated names belong to CCP. This is an independent external calculator.
