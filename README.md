@@ -4,14 +4,20 @@ Windows desktop loot valuation and blueprint manufacturing calculator. Version 1
 
 ## Run from source
 
-This repository contains the source code and bundled data. Generated Windows EXE and ZIP packages are not stored in the repository. On Windows 10/11 with Python 3.11 or later:
+This repository contains the source code and bundled data. Generated Windows installers and portable ZIP packages are distributed separately from the source code. On Windows 10/11 with Python 3.11 or later:
 
 ```powershell
 python -m pip install -r requirements.txt
 python main.py
 ```
 
-## Windows package and language selection
+## Single-file Windows installer
+
+Download `EveLootAnalyzer-Setup-1.5.exe` from a published GitHub release, run it, choose English or Polish, and follow the wizard. The installer includes Python and all application libraries. It installs for the current user, adds a Start menu entry, and offers a desktop shortcut. Windows Settings can uninstall the app. Updates and uninstall preserve profiles and sessions in `%LOCALAPPDATA%\EveLootAnalyzer`.
+
+The installer language controls the wizard; use the two flags in the app to select the interface language. The installer is not digitally signed.
+
+## Portable Windows package and language selection
 
 After building the Windows package, run `Start.bat` in the project folder, or `dist-v1.5/EveLootAnalyzer/EveLootAnalyzer.exe`.
 For another computer, extract **all** of `dist-v1.5/EveLootAnalyzer-Windows.zip`. Keep the `_internal` folder next to the executable. Python is not required.
@@ -82,6 +88,14 @@ powershell -ExecutionPolicy Bypass -File build.ps1
 ```
 
 The build script runs the tests and creates the EXE folder and portable ZIP under `dist-v1.5`.
+
+To build the single-file installer, install Inno Setup 6 and run:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File build-installer.ps1
+```
+
+If the compiler is in a custom location, pass `-Compiler "C:\path\to\ISCC.exe"`. The script creates `dist-v1.5/EveLootAnalyzer-Setup-1.5.exe` and its SHA-256 checksum. Upload these two files as assets of a GitHub release; users only need the EXE.
 
 The domain modules are `parser.py`, `market.py`, `industry.py` and `rules.py`. Integrations are in `esi.py`, `sde.py` and `sso.py`; `storage.py` manages SQLite, `engine.py` coordinates analysis, and `ui.py` contains the PySide6 interface. Network requests and SDE imports run outside the GUI thread. Localization catalogs are in `app/translations.py`; Qt Polish translations are bundled in `assets/qt`.
 
