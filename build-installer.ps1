@@ -22,7 +22,7 @@ if (-not $Compiler) {
     }
 }
 if (-not $Compiler) { throw 'Install Inno Setup 6, or pass -Compiler with the path to ISCC.exe.' }
-Copy-Item -LiteralPath 'README.md','README.en.md' -Destination $appDirectory -Force
+Copy-Item -LiteralPath 'README.md' -Destination $appDirectory -Force
 $sourcePath = (Resolve-Path -LiteralPath $appDirectory).Path
 $outputPath = (Resolve-Path -LiteralPath $OutputDirectory).Path
 & $Compiler "/DAppVersion=$Version" "/DSourceDir=$sourcePath" "/O$outputPath" 'installer\EveLootAnalyzer.iss'
