@@ -1,4 +1,4 @@
-param([string]$Installer = 'dist-v1.5\EveLootAnalyzer-Setup-1.5.exe')
+param([string]$Installer = 'dist-v1.6\EveLootAnalyzer-Setup-1.6.exe')
 $ErrorActionPreference = 'Stop'
 $workspacePath = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
 Set-Location -LiteralPath $workspacePath

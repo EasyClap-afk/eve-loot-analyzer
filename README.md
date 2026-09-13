@@ -1,6 +1,6 @@
 # EVE Loot & Jita Market Analyzer
 
-Windows desktop loot valuation and blueprint manufacturing calculator. Version 1.5 includes a black and red Pochven-inspired theme and complete Polish/English interface localization.
+Windows desktop loot valuation and blueprint manufacturing calculator. Version 1.6 includes a black and red Pochven-inspired theme and complete Polish/English interface localization.
 
 ## Run from source
 
@@ -13,16 +13,20 @@ python main.py
 
 ## Single-file Windows installer
 
-Download `EveLootAnalyzer-Setup-1.5.exe` from a published GitHub release, run it, choose English or Polish, and follow the wizard. The installer includes Python and all application libraries. It installs for the current user, adds a Start menu entry, and offers a desktop shortcut. Windows Settings can uninstall the app. Updates and uninstall preserve profiles and sessions in `%LOCALAPPDATA%\EveLootAnalyzer`.
+Download `EveLootAnalyzer-Setup-1.6.exe` from a published GitHub release, run it, choose English or Polish, and follow the wizard. The installer includes Python and all application libraries. It installs for the current user, adds a Start menu entry, and offers a desktop shortcut. Windows Settings can uninstall the app. Updates and uninstall preserve profiles and sessions in `%LOCALAPPDATA%\EveLootAnalyzer`.
 
 The installer language controls the wizard; use the two flags in the app to select the interface language. The installer is not digitally signed.
 
 ## Portable Windows package and language selection
 
-After building the Windows package, run `Start.bat` in the project folder, or `dist-v1.5/EveLootAnalyzer/EveLootAnalyzer.exe`.
-For another computer, extract **all** of `dist-v1.5/EveLootAnalyzer-Windows.zip`. Keep the `_internal` folder next to the executable. Python is not required.
+After building the Windows package, run `Start.bat` in the project folder, or `dist-v1.6/EveLootAnalyzer/EveLootAnalyzer.exe`.
+For another computer, extract **all** of `dist-v1.6/EveLootAnalyzer-Windows.zip`. Keep the `_internal` folder next to the executable. Python is not required.
 
 Use the flags in the upper-right corner: Polish for Polski, British for English. Changes apply immediately and are remembered. Switching languages preserves pasted loot, results, filters and sorting. EVE item and skill names retain their original names.
+
+## Stop an analysis
+
+Click **Stop analysis** next to **Analyze market** to cancel an active loot analysis, including an ESI request waiting for a response. The last completed result and your edited input are preserved. A cancelled analysis does not replace results or save a partial session. Once stopped, correct the loot and click **Analyze market** again. The button is enabled only during loot analysis.
 
 ## Analyze loot
 
@@ -85,7 +89,7 @@ python -m pytest tests -q
 powershell -ExecutionPolicy Bypass -File build.ps1
 ```
 
-The build script runs the tests and creates the EXE folder and portable ZIP under `dist-v1.5`.
+The build script runs the tests and creates the EXE folder and portable ZIP under `dist-v1.6`.
 
 To build the single-file installer, install Inno Setup 6 and run:
 
@@ -93,7 +97,7 @@ To build the single-file installer, install Inno Setup 6 and run:
 powershell -ExecutionPolicy Bypass -File build-installer.ps1
 ```
 
-If the compiler is in a custom location, pass `-Compiler "C:\path\to\ISCC.exe"`. The script creates `dist-v1.5/EveLootAnalyzer-Setup-1.5.exe` and its SHA-256 checksum. Upload these two files as assets of a GitHub release; users only need the EXE.
+If the compiler is in a custom location, pass `-Compiler "C:\path\to\ISCC.exe"`. The script creates `dist-v1.6/EveLootAnalyzer-Setup-1.6.exe` and its SHA-256 checksum. Upload these two files as assets of a GitHub release; users only need the EXE.
 
 The domain modules are `parser.py`, `market.py`, `industry.py` and `rules.py`. Integrations are in `esi.py`, `sde.py` and `sso.py`; `storage.py` manages SQLite, `engine.py` coordinates analysis, and `ui.py` contains the PySide6 interface. Network requests and SDE imports run outside the GUI thread. Localization catalogs are in `app/translations.py`; Qt Polish translations are bundled in `assets/qt`.
 

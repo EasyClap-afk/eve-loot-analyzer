@@ -218,3 +218,9 @@ CATALOG.update({
     'Unresolved lines':{'pl':'Nierozpoznane wiersze','en':'Unresolved lines'},
     'Original loot input':{'pl':'Oryginalny tekst łupów','en':'Original loot input'},
 })
+
+CATALOG.update({
+    'Stop analysis': {'pl': 'Zatrzymaj analizę', 'en': 'Stop analysis'},
+    'Stopping analysis…': {'pl': 'Zatrzymywanie analizy…', 'en': 'Stopping analysis…'},
+    'Analysis stopped. Edit the loot and analyze again.': {'pl': 'Analiza zatrzymana. Popraw łupy i uruchom analizę ponownie.', 'en': 'Analysis stopped. Edit the loot and analyze again.'},
+})

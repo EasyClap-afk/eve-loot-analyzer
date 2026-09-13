@@ -1,6 +1,6 @@
 param(
-    [string]$OutputDirectory = 'dist-v1.5',
-    [string]$Version = '1.5',
+    [string]$OutputDirectory = 'dist-v1.6',
+    [string]$Version = '1.6',
     [string]$Compiler = ''
 )
 $ErrorActionPreference = 'Stop'

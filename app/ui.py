@@ -4,6 +4,8 @@ import json
 import logging
 import re
 import sys
+from threading import Event
+from contextlib import nullcontext
 from datetime import datetime
 from decimal import Decimal as D
 from pathlib import Path
@@ -17,6 +19,7 @@ from .rules import tax, broker, SKILL_IDS
 from .sde import update_sde
 from .sso import SSO, REDIRECT
 from .i18n import tr, message, error_text, set_language, language
+from .cancellation import AnalysisCancelled, CancellationScope, check_cancelled
 WATCH_MODES = ('Sell price', 'Buy price', 'Realistic net')
 
 def language_flag(code):
@@ -157,13 +160,20 @@ class Worker(QThread):
     failure = Signal(str)
     progress = Signal(str)
 
-    def __init__(self, fn):
+    def __init__(self, fn, cancellable=False):
         super().__init__()
         self.fn = fn
+        self.cancellable = cancellable
+        self.cancel_event = Event()
 
     def run(self):
         try:
-            result = self.fn(self.progress.emit)
+            with CancellationScope(self.cancel_event) if self.cancellable else nullcontext():
+                check_cancelled()
+                result = self.fn(self.progress.emit)
+                check_cancelled()
+        except AnalysisCancelled:
+            return
         except Exception as exc:
             logging.exception('Background operation failed')
             self.failure.emit(str(exc))
@@ -292,6 +302,8 @@ class MainWindow(QMainWindow):
         if pending_settings and self.result:self.analyze()
 
     def show_progress(self, text):
+        if self.worker and self.worker.cancel_event.is_set():
+            return
         self.status.setText(message(text))
 
     def page(self, title):
@@ -323,6 +335,10 @@ class MainWindow(QMainWindow):
         row = QHBoxLayout()
         self.analyze_button = self.button(tr('Analizuj rynek'), self.analyze, True)
         row.addWidget(self.analyze_button)
+        self.stop_button = self.button(tr('Stop analysis'), self.stop_analysis)
+        self.stop_button.setObjectName('stop_analysis')
+        self.stop_button.setEnabled(bool(self.busy and self.worker and self.worker.cancellable and not self.worker.cancel_event.is_set()))
+        row.addWidget(self.stop_button)
         row.addWidget(self.button(tr('Wklej ze schowka'), lambda: self.raw.setPlainText(QApplication.clipboard().text())))
         row.addWidget(self.button(tr('Wyczyść'), self.clear))
         self.save_button = self.button(tr('Zapisz sesję'), self.save_session)
@@ -380,29 +396,55 @@ class MainWindow(QMainWindow):
         if self.result and self.raw.toPlainText() != self.result['raw']:
             self.status.setText(tr('Zmieniono tekst lootu — naciśnij Analizuj, aby odświeżyć wynik.'))
 
-    def run(self, fn, done):
+    def run(self, fn, done, cancellable=False):
         if self.busy:
             return False
         self.busy = True
         self.analyze_button.setEnabled(False)
         self.save_button.setEnabled(False)
-        self.worker = Worker(fn)
+        self.worker = Worker(fn, cancellable)
+        self.stop_button.setEnabled(cancellable)
+        self.worker_done = done
         self.worker.progress.connect(self.show_progress)
-        self.worker.success.connect(done)
+        self.worker.success.connect(self.worker_succeeded)
         self.worker.failure.connect(self.failed)
         self.worker.finished.connect(self.finished)
         self.worker.start()
         return True
 
+    def stop_analysis(self):
+        if not self.busy or not self.worker or not self.worker.cancellable:
+            return
+        self.worker.cancel_event.set()
+        self.pending_reanalysis = False
+        if self.profile_timer.isActive():
+            self.profile_timer.stop()
+            self.collect_settings()
+            self.store.save_profile(self.profile)
+        self.stop_button.setEnabled(False)
+        self.status.setText(tr('Stopping analysis…'))
+
+    def worker_succeeded(self, result):
+        if not self.worker.cancel_event.is_set():
+            self.worker_done(result)
+
     def failed(self, message):
+        if self.worker and self.worker.cancel_event.is_set():
+            return
         self.status.setText(tr('Błąd: ') + error_text(message))
         QMessageBox.warning(self, tr('Nie udało się ukończyć operacji'), error_text(message))
 
     def finished(self):
+        cancelled = bool(self.worker and self.worker.cancel_event.is_set())
         self.busy = False
+        self.stop_button.setEnabled(False)
         self.analyze_button.setEnabled(True)
         self.raw_changed()
         self.render_data()
+        if cancelled:
+            self.pending_reanalysis = False
+            self.status.setText(tr('Analysis stopped. Edit the loot and analyze again.'))
+            return
         if getattr(self, 'pending_reanalysis', False):
             self.pending_reanalysis = False
             QTimer.singleShot(0, self.analyze)
@@ -423,7 +465,7 @@ class MainWindow(QMainWindow):
         p = copy.deepcopy(self.profile)
         params = copy.deepcopy(self.params)
         self.status.setText(tr('Pobieranie i analiza rynku…'))
-        self.run(lambda progress: self.engine.analyze(raw, p, params, progress), self.render_result)
+        self.run(lambda progress: self.engine.analyze(raw, p, params, progress), self.render_result, cancellable=True)
 
     def clear(self):
         if self.busy:

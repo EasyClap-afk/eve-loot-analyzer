@@ -6,6 +6,7 @@ from email.utils import parsedate_to_datetime
 import httpx
 from .rules import compatibility_date, REGION
 from .storage import dumps
+from .cancellation import check_cancelled, request
 
 class Esi:
     def __init__(self, store):
@@ -16,6 +17,7 @@ class Esi:
         self.blocked_until = 0
 
     def get(self, path, params=None, ttl=300):
+        check_cancelled()
         key = path+'?'+str(sorted((params or {}).items()))
         rows = self.store.query('SELECT * FROM cache WHERE key=?',(key,))
         cached = rows[0] if rows else None
@@ -28,7 +30,8 @@ class Esi:
         try:
             if now<self.blocked_until:
                 raise RuntimeError('ESI rate limit: retry after cooldown')
-            response = self.client.get(path, params=params, headers={'If-None-Match':cached['etag']} if cached and cached['etag'] else {})
+            response = request(self.client, path, params=params, headers={'If-None-Match':cached['etag']} if cached and cached['etag'] else {})
+            check_cancelled()
             if response.status_code in (420,429,503):
                 retry = response.headers.get('Retry-After','60')
                 try: delay = float(retry)

@@ -1,4 +1,4 @@
-param([string]$OutputDirectory = 'dist-v1.5')
+param([string]$OutputDirectory = 'dist-v1.6')
 $ErrorActionPreference = 'Stop'
 Set-Location -LiteralPath $PSScriptRoot
 python -m pytest tests -q

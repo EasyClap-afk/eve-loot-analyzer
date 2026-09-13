@@ -5,12 +5,14 @@ from .market import analyze_market
 from .industry import analyze_blueprint
 from .rules import SYSTEM
 from .storage import dumps
+from .cancellation import check_cancelled
 
 class Engine:
     def __init__(self,store,esi):
         self.store,self.esi = store,esi
 
     def analyze(self, raw, profile, bpc_params=None, progress=lambda s:None):
+        check_cancelled()
         if not self.store.meta('sde_build'):
             raise ValueError('Download SDE in Data / Dane before analysis.')
         parsed = parse_loot(raw,self.store.index())
@@ -18,12 +20,14 @@ class Engine:
         distances = {r['system_id']:r['distance'] for r in self.store.query('SELECT * FROM jumps')}
         order_cache,history_cache,market_cache = {},{},{}
         def orders(type_id):
+            check_cancelled()
             if type_id not in order_cache:
                 try: order_cache[type_id] = self.esi.orders(type_id)
                 except Exception as exc: order_cache[type_id] = exc
             if isinstance(order_cache[type_id],Exception): raise order_cache[type_id]
             return order_cache[type_id]
         def market(type_id,quantity):
+            check_cancelled()
             key = (type_id,quantity)
             if key in market_cache: return market_cache[key]
             item = {**self.store.item(type_id),'quantity':quantity}
@@ -43,10 +47,12 @@ class Engine:
             return result
         regular = []
         for item in parsed['regular']:
+            check_cancelled()
             progress('Analyzing '+item['name'])
             regular.append(market(item['type_id'],item['quantity']))
         adjusted,sci,global_errors = {},None,[]
         if parsed['blueprints']:
+            check_cancelled()
             try:
                 adjusted = {r['type_id']:r.get('adjusted_price') for r in self.esi.get('/markets/prices',ttl=3600)[0]}
                 systems = self.esi.get('/industry/systems',ttl=3600)[0]
@@ -54,9 +60,11 @@ class Engine:
             except Exception as exc: global_errors.append('Industry data incomplete: '+str(exc))
         blueprints = []
         for item in parsed['blueprints']:
+            check_cancelled()
             progress('Blueprint '+item['name'])
             params = (bpc_params or {}).get(str(item['type_id']),dict(runs=1,me=0,te=0,remaining_runs=1))
             blueprints.append(analyze_blueprint(item,self.store.recipe(item['type_id']),params,profile,market,orders,adjusted,sci,distances,lambda i:self.store.item(i)['name']))
+        check_cancelled()
         totals = {}
         for mode in ('instant','sell','realistic'):
             vals = [r[mode+'_net'] for r in regular]

@@ -1,8 +1,8 @@
 #ifndef AppVersion
-  #define AppVersion "1.5"
+  #define AppVersion "1.6"
 #endif
 #ifndef SourceDir
-  #define SourceDir "..\dist-v1.5\EveLootAnalyzer"
+  #define SourceDir "..\dist-v1.6\EveLootAnalyzer"
 #endif
 
 [Setup]
@@ -18,7 +18,7 @@ PrivilegesRequired=lowest
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 MinVersion=10.0
-OutputDir=..\dist-v1.5
+OutputDir=..\dist-v1.6
 OutputBaseFilename=EveLootAnalyzer-Setup-{#AppVersion}
 Compression=lzma2
 SolidCompression=yes
